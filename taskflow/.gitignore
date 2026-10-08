@@ -50,8 +50,10 @@ app.*.map.json
 !.env.example
 
 # Native Firebase credentials
-android/app/google-services.json
+google-services.json
+**/google-services.json
 ios/Runner/GoogleService-Info.plist
+**/GoogleService-Info.plist
 
 # Signing keys
 *.jks
