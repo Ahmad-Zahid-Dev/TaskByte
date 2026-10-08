@@ -1,0 +1,10 @@
+.DS_Store
+Thumbs.db
+*.log
+taskflow/.dart_tool/
+taskflow/build/
+taskflow/.flutter-plugins
+taskflow/.flutter-plugins-dependencies
+taskflow/.packages
+taskflow/.pub-cache/
+taskflow/.pub/
