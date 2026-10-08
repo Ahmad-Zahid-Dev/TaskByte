@@ -17,10 +17,7 @@ import 'package:flutter/foundation.dart'
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      throw UnsupportedError(
-        'DefaultFirebaseOptions have not been configured for web - '
-        'you can reconfigure this by running the FlutterFire CLI again.',
-      );
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -62,10 +59,17 @@ class DefaultFirebaseOptions {
     messagingSenderId: '88516661803',
     projectId: 'whatbytes-task-app-68831',
     storageBucket: 'whatbytes-task-app-68831.firebasestorage.app',
-    androidClientId:
-        '88516661803-4drr5ae0riks8p3rdmkc9h1a0cp1ahe1.apps.googleusercontent.com',
-    iosClientId:
-        '88516661803-i8iqa3nr1b5juv83hdtjjha986doc8u1.apps.googleusercontent.com',
+    androidClientId: '88516661803-4drr5ae0riks8p3rdmkc9h1a0cp1ahe1.apps.googleusercontent.com',
+    iosClientId: '88516661803-i8iqa3nr1b5juv83hdtjjha986doc8u1.apps.googleusercontent.com',
     iosBundleId: 'com.whatbytes.taskflow',
+  );
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyCyjSQhQjRp-eyeMyhTYoY5M0JjL7k5FIs',
+    appId: '1:88516661803:web:b5d9059a9efcc20a0e506e',
+    messagingSenderId: '88516661803',
+    projectId: 'whatbytes-task-app-68831',
+    authDomain: 'whatbytes-task-app-68831.firebaseapp.com',
+    storageBucket: 'whatbytes-task-app-68831.firebasestorage.app',
+    measurementId: 'G-G2DVVV7SXC',
   );
 }
