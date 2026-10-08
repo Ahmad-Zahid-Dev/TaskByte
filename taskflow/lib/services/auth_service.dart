@@ -72,32 +72,59 @@ class AuthService {
 
   Future<AppUser?> signInWithGoogle() async {
     try {
-      final googleUser = await _googleSignIn.signIn();
-      if (googleUser == null) {
-        // User aborted the Google sign in prompt
+      if (kIsWeb) {
+        // On Web: Use Firebase Auth's native popup to bypass origin-mismatch on localhost
+        final provider = GoogleAuthProvider();
+        provider.addScope('email');
+        provider.addScope('profile');
+        provider.setCustomParameters({'prompt': 'select_account'});
+        final result = await _auth.signInWithPopup(provider);
+        final user = result.user;
+        if (user == null) return null;
+        return _mapFirebaseUser(user);
+      } else {
+        // On Android / iOS: Use native Google Play Services sign-in with SHA-1
+        final googleUser = await _googleSignIn.signIn();
+        if (googleUser == null) {
+          // User aborted the prompt
+          return null;
+        }
+
+        final googleAuth = await googleUser.authentication;
+        final credential = GoogleAuthProvider.credential(
+          accessToken: googleAuth.accessToken,
+          idToken: googleAuth.idToken,
+        );
+
+        final result = await _auth.signInWithCredential(credential);
+        final user = result.user;
+        if (user == null) throw const AuthException('Google sign in failed');
+        return _mapFirebaseUser(user);
+      }
+    } on FirebaseAuthException catch (e) {
+      // Gracefully handle user cancelling the popup
+      if (e.code == 'popup-closed-by-user' || e.code == 'canceled') {
         return null;
       }
-
-      final googleAuth = await googleUser.authentication;
-      final credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
-      );
-
-      final result = await _auth.signInWithCredential(credential);
-      final user = result.user;
-      if (user == null) throw const AuthException('Google sign in failed');
-      return _mapFirebaseUser(user);
-    } on FirebaseAuthException catch (e) {
       throw AuthException(_mapFirebaseAuthError(e));
     } catch (e) {
+      final str = e.toString().toLowerCase();
+      if (str.contains('popup_closed') ||
+          str.contains('canceled') ||
+          str.contains('cancelled')) {
+        return null;
+      }
       if (e is AuthException) rethrow;
       throw AuthException(e.toString());
     }
   }
 
   Future<void> signOut() async {
-    await Future.wait([_auth.signOut(), _googleSignIn.signOut()]);
+    if (kIsWeb) {
+      await _auth.signOut();
+    } else {
+      await Future.wait([_auth.signOut(), _googleSignIn.signOut()]);
+    }
   }
 
   Future<void> sendPasswordResetEmail(String email) async {
