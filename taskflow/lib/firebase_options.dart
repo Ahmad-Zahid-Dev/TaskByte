@@ -59,8 +59,10 @@ class DefaultFirebaseOptions {
     messagingSenderId: '88516661803',
     projectId: 'whatbytes-task-app-68831',
     storageBucket: 'whatbytes-task-app-68831.firebasestorage.app',
-    androidClientId: '88516661803-4drr5ae0riks8p3rdmkc9h1a0cp1ahe1.apps.googleusercontent.com',
-    iosClientId: '88516661803-i8iqa3nr1b5juv83hdtjjha986doc8u1.apps.googleusercontent.com',
+    androidClientId:
+        '88516661803-4drr5ae0riks8p3rdmkc9h1a0cp1ahe1.apps.googleusercontent.com',
+    iosClientId:
+        '88516661803-i8iqa3nr1b5juv83hdtjjha986doc8u1.apps.googleusercontent.com',
     iosBundleId: 'com.whatbytes.taskflow',
   );
   static const FirebaseOptions web = FirebaseOptions(

@@ -1,12 +1,18 @@
 import 'dart:async';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../models/app_user.dart';
 
+const String _webClientId =
+    '88516661803-cpckpdqopf2lvk33gkomqt2fm1pg7dtr.apps.googleusercontent.com';
+
 class AuthService {
   AuthService({FirebaseAuth? auth, GoogleSignIn? googleSignIn})
     : _auth = auth ?? FirebaseAuth.instance,
-      _googleSignIn = googleSignIn ?? GoogleSignIn();
+      _googleSignIn =
+          googleSignIn ??
+          (kIsWeb ? GoogleSignIn(clientId: _webClientId) : GoogleSignIn());
 
   final FirebaseAuth _auth;
   final GoogleSignIn _googleSignIn;
