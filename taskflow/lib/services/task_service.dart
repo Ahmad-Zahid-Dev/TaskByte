@@ -1,137 +1,171 @@
+import 'dart:async';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/task_model.dart';
 
-class TaskService {
-  final List<TaskModel> _tasks = _seedTasks();
+abstract class TaskService {
+  factory TaskService({FirebaseFirestore? firestore}) =>
+      FirestoreTaskService(firestore: firestore);
+  factory TaskService.inMemory({List<TaskModel>? seed}) =>
+      InMemoryTaskService(seed: seed);
 
-  List<TaskModel> getAll() => List.unmodifiable(_tasks);
+  Stream<List<TaskModel>> streamTasks(String userId);
+  Future<TaskModel> add(String userId, TaskModel task);
+  Future<TaskModel> update(String userId, TaskModel task);
+  Future<void> delete(String userId, String id);
+  Future<void> restore(String userId, TaskModel task);
+}
 
-  Future<TaskModel> add(TaskModel task) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    _tasks.add(task);
+class FirestoreTaskService implements TaskService {
+  FirestoreTaskService({FirebaseFirestore? firestore})
+    : _firestore = firestore ?? FirebaseFirestore.instance;
+
+  final FirebaseFirestore _firestore;
+
+  CollectionReference<Map<String, dynamic>> _userTasksRef(String userId) =>
+      _firestore.collection('users').doc(userId).collection('tasks');
+
+  @override
+  Stream<List<TaskModel>> streamTasks(String userId) {
+    return _userTasksRef(userId).snapshots().map((snapshot) {
+      if (snapshot.docs.isEmpty) {
+        // Seed default sample tasks for a new user in the background
+        _seedInitialTasks(userId);
+        return seedTasks();
+      }
+      return snapshot.docs.map((doc) => TaskModel.fromMap(doc.data())).toList();
+    });
+  }
+
+  Future<void> _seedInitialTasks(String userId) async {
+    final batch = _firestore.batch();
+    final ref = _userTasksRef(userId);
+    for (final task in seedTasks()) {
+      batch.set(ref.doc(task.id), task.toMap());
+    }
+    await batch.commit();
+  }
+
+  @override
+  Future<TaskModel> add(String userId, TaskModel task) async {
+    await _userTasksRef(userId).doc(task.id).set(task.toMap());
     return task;
   }
 
-  Future<TaskModel> update(TaskModel task) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    final idx = _tasks.indexWhere((t) => t.id == task.id);
-    if (idx == -1) throw StateError('Task not found: ${task.id}');
-    _tasks[idx] = task;
+  @override
+  Future<TaskModel> update(String userId, TaskModel task) async {
+    await _userTasksRef(userId).doc(task.id).update(task.toMap());
     return task;
   }
 
-  Future<void> delete(String id) async {
-    await Future.delayed(const Duration(milliseconds: 300));
-    _tasks.removeWhere((t) => t.id == id);
+  @override
+  Future<void> delete(String userId, String id) async {
+    await _userTasksRef(userId).doc(id).delete();
   }
 
-  Future<void> restore(TaskModel task) async {
-    _tasks.add(task);
-    _tasks.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+  @override
+  Future<void> restore(String userId, TaskModel task) async {
+    await _userTasksRef(userId).doc(task.id).set(task.toMap());
   }
 }
 
-List<TaskModel> _seedTasks() {
+class InMemoryTaskService implements TaskService {
+  InMemoryTaskService({List<TaskModel>? seed})
+    : _tasks = List.from(seed ?? seedTasks());
+
+  final List<TaskModel> _tasks;
+  final _controller = StreamController<List<TaskModel>>.broadcast();
+
+  void _emit() {
+    _controller.add(List.unmodifiable(_tasks));
+  }
+
+  @override
+  Stream<List<TaskModel>> streamTasks(String userId) {
+    // Schedule initial emit
+    scheduleMicrotask(_emit);
+    return _controller.stream;
+  }
+
+  @override
+  Future<TaskModel> add(String userId, TaskModel task) async {
+    _tasks.add(task);
+    _emit();
+    return task;
+  }
+
+  @override
+  Future<TaskModel> update(String userId, TaskModel task) async {
+    final idx = _tasks.indexWhere((t) => t.id == task.id);
+    if (idx != -1) _tasks[idx] = task;
+    _emit();
+    return task;
+  }
+
+  @override
+  Future<void> delete(String userId, String id) async {
+    _tasks.removeWhere((t) => t.id == id);
+    _emit();
+  }
+
+  @override
+  Future<void> restore(String userId, TaskModel task) async {
+    _tasks.add(task);
+    _emit();
+  }
+}
+
+List<TaskModel> seedTasks() {
   final now = DateTime.now();
   final today = DateTime(now.year, now.month, now.day);
 
   return [
     TaskModel(
       id: 'seed_1',
-      title: 'Submit project proposal',
-      description: 'Send the Q4 project proposal to the manager.',
-      dueDate: today.subtract(const Duration(days: 2)),
-      priority: Priority.high,
-      category: 'Work',
-      isCompleted: false,
-      createdAt: today.subtract(const Duration(days: 5)),
-    ),
-    TaskModel(
-      id: 'seed_2',
-      title: 'Pay electricity bill',
-      description: '',
+      title: 'Submit weekly gig invoice',
+      description: 'Prepare timesheet and submit invoice to client.',
       dueDate: today.subtract(const Duration(days: 1)),
-      priority: Priority.medium,
-      category: 'Personal',
+      priority: Priority.high,
+      category: 'Finance',
       isCompleted: false,
       createdAt: today.subtract(const Duration(days: 3)),
     ),
     TaskModel(
-      id: 'seed_3',
-      title: 'Schedule dentist appointment',
-      description: 'Call Dr. Smith\'s office between 9–11 AM.',
-      dueDate: today,
-      priority: Priority.low,
-      category: 'Personal',
+      id: 'seed_2',
+      title: 'Deliver package to Maple St',
+      description: 'Courier order #4492. Signature required.',
+      dueDate: today.add(const Duration(hours: 3)),
+      priority: Priority.high,
+      category: 'Delivery',
       isCompleted: false,
       createdAt: today.subtract(const Duration(days: 1)),
     ),
     TaskModel(
+      id: 'seed_3',
+      title: 'Vehicle maintenance & gas refill',
+      description: 'Check tire pressure and top up gas tank.',
+      dueDate: today.add(const Duration(hours: 6)),
+      priority: Priority.medium,
+      category: 'Vehicle',
+      isCompleted: false,
+      createdAt: today,
+    ),
+    TaskModel(
       id: 'seed_4',
-      title: 'Prepare team meeting slides',
-      description: 'Quarterly review deck for Monday\'s all-hands.',
-      dueDate: today,
-      priority: Priority.high,
-      category: 'Work',
-      isCompleted: true,
-      createdAt: today.subtract(const Duration(days: 2)),
+      title: 'Pick up bakery supplies for cafe run',
+      description: 'Collect morning order from Downtown Bakery.',
+      dueDate: today.add(const Duration(days: 1, hours: 2)),
+      priority: Priority.low,
+      category: 'Delivery',
+      isCompleted: false,
+      createdAt: today,
     ),
     TaskModel(
       id: 'seed_5',
-      title: 'Call Charlotte',
-      description: '',
-      dueDate: today.add(const Duration(days: 1)),
-      priority: Priority.low,
-      category: 'Personal',
-      isCompleted: false,
-      createdAt: today,
-    ),
-    TaskModel(
-      id: 'seed_6',
-      title: 'Submit exercise 3.1',
-      description: 'Chapter 3 assignments for the online course.',
-      dueDate: today.add(const Duration(days: 1)),
+      title: 'Review weekly earnings statement',
+      description: 'Reconcile platform payouts with bank account.',
+      dueDate: today.add(const Duration(days: 3)),
       priority: Priority.medium,
-      category: 'Study',
-      isCompleted: false,
-      createdAt: today,
-    ),
-    TaskModel(
-      id: 'seed_7',
-      title: 'Prepare A/B test plan',
-      description: 'Design A/B test for the new onboarding flow.',
-      dueDate: today.add(const Duration(days: 2)),
-      priority: Priority.high,
-      category: 'App',
-      isCompleted: false,
-      createdAt: today,
-    ),
-    TaskModel(
-      id: 'seed_8',
-      title: 'Submit exercise 3.2',
-      description: '',
-      dueDate: today.add(const Duration(days: 4)),
-      priority: Priority.medium,
-      category: 'Study',
-      isCompleted: false,
-      createdAt: today,
-    ),
-    TaskModel(
-      id: 'seed_9',
-      title: 'Water plants',
-      description: '',
-      dueDate: today.add(const Duration(days: 5)),
-      priority: Priority.low,
-      category: 'Personal',
-      isCompleted: true,
-      createdAt: today,
-    ),
-    TaskModel(
-      id: 'seed_10',
-      title: 'Renew gym membership',
-      description: 'Check if the annual plan is still discounted.',
-      dueDate: today.add(const Duration(days: 14)),
-      priority: Priority.low,
-      category: 'Personal',
+      category: 'Finance',
       isCompleted: false,
       createdAt: today,
     ),

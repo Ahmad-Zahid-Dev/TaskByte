@@ -135,12 +135,18 @@ class _LoginScreenState extends State<LoginScreen> {
                       logoAsset: const GoogleLogo(),
                       onPressed: () async {
                         final auth = context.read<AuthProvider>();
-                        final ok = await auth.signIn(
-                          email: 'google@demo.com',
-                          password: 'google123',
-                        );
+                        final ok = await auth.signInWithGoogle();
                         if (!context.mounted) return;
-                        if (ok) context.go(AppRoutes.home);
+                        if (ok) {
+                          context.go(AppRoutes.home);
+                        } else if (auth.error != null) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text(auth.error!),
+                              backgroundColor: AppColors.danger,
+                            ),
+                          );
+                        }
                       },
                     ).animate().fadeIn(delay: 250.ms, duration: 300.ms),
                     const SizedBox(height: 32),

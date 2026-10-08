@@ -53,9 +53,12 @@ void main() {
     late TaskService service;
     late TaskProvider provider;
 
-    setUp(() {
-      service = TaskService();
+    setUp(() async {
+      service = TaskService.inMemory();
       provider = TaskProvider(service);
+      provider.bindUser('test_user');
+      // Wait for stream to emit initial seed
+      await Future<void>.delayed(const Duration(milliseconds: 50));
     });
 
     test('initializes with seed tasks', () {

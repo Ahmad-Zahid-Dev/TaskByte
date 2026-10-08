@@ -1,17 +1,17 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../models/task_model.dart';
 import '../services/task_service.dart';
 import '../core/utils/date_helper.dart';
 
 class TaskProvider extends ChangeNotifier {
-  TaskProvider(this._service) {
-    _tasks = List.from(_service.getAll());
-    _tasks.sort((a, b) => a.dueDate.compareTo(b.dueDate));
-  }
+  TaskProvider(this._service);
 
   final TaskService _service;
+  String? _userId;
+  StreamSubscription<List<TaskModel>>? _tasksSubscription;
 
-  late List<TaskModel> _tasks;
+  List<TaskModel> _tasks = [];
   TaskModel? _lastDeleted;
 
   // Filter state
@@ -24,6 +24,25 @@ class TaskProvider extends ChangeNotifier {
   String get search => _search;
 
   List<TaskModel> get tasks => _tasks;
+
+  void bindUser(String? userId) {
+    if (_userId == userId) return;
+    _userId = userId;
+    _tasksSubscription?.cancel();
+    _lastDeleted = null;
+
+    if (userId == null) {
+      _tasks = [];
+      notifyListeners();
+      return;
+    }
+
+    _tasksSubscription = _service.streamTasks(userId).listen((newTasks) {
+      _tasks = List.from(newTasks);
+      _tasks.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+      notifyListeners();
+    });
+  }
 
   List<TaskModel> get filtered {
     return _tasks.where((t) {
@@ -69,47 +88,73 @@ class TaskProvider extends ChangeNotifier {
   }
 
   Future<void> addTask(TaskModel task) async {
-    await _service.add(task);
-    _tasks.add(task);
-    _tasks.sort((a, b) => a.dueDate.compareTo(b.dueDate));
-    notifyListeners();
+    final uid = _userId;
+    if (uid != null) {
+      await _service.add(uid, task);
+    } else {
+      _tasks.add(task);
+      _tasks.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+      notifyListeners();
+    }
   }
 
   Future<void> updateTask(TaskModel task) async {
-    await _service.update(task);
-    final idx = _tasks.indexWhere((t) => t.id == task.id);
-    if (idx != -1) _tasks[idx] = task;
-    _tasks.sort((a, b) => a.dueDate.compareTo(b.dueDate));
-    notifyListeners();
+    final uid = _userId;
+    if (uid != null) {
+      await _service.update(uid, task);
+    } else {
+      final idx = _tasks.indexWhere((t) => t.id == task.id);
+      if (idx != -1) _tasks[idx] = task;
+      _tasks.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+      notifyListeners();
+    }
   }
 
   Future<void> toggleComplete(String id) async {
     final idx = _tasks.indexWhere((t) => t.id == id);
     if (idx == -1) return;
     final updated = _tasks[idx].copyWith(isCompleted: !_tasks[idx].isCompleted);
-    await _service.update(updated);
-    _tasks[idx] = updated;
-    notifyListeners();
+    final uid = _userId;
+    if (uid != null) {
+      await _service.update(uid, updated);
+    } else {
+      _tasks[idx] = updated;
+      notifyListeners();
+    }
   }
 
   Future<void> deleteTask(String id) async {
     final idx = _tasks.indexWhere((t) => t.id == id);
     if (idx == -1) return;
     _lastDeleted = _tasks[idx];
-    await _service.delete(id);
-    _tasks.removeAt(idx);
-    notifyListeners();
+    final uid = _userId;
+    if (uid != null) {
+      await _service.delete(uid, id);
+    } else {
+      _tasks.removeAt(idx);
+      notifyListeners();
+    }
   }
 
   Future<void> undoDelete() async {
     final task = _lastDeleted;
     if (task == null) return;
     _lastDeleted = null;
-    await _service.restore(task);
-    _tasks.add(task);
-    _tasks.sort((a, b) => a.dueDate.compareTo(b.dueDate));
-    notifyListeners();
+    final uid = _userId;
+    if (uid != null) {
+      await _service.restore(uid, task);
+    } else {
+      _tasks.add(task);
+      _tasks.sort((a, b) => a.dueDate.compareTo(b.dueDate));
+      notifyListeners();
+    }
   }
 
   bool get canUndo => _lastDeleted != null;
+
+  @override
+  void dispose() {
+    _tasksSubscription?.cancel();
+    super.dispose();
+  }
 }

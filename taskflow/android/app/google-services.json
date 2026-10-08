@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "88516661803",
+    "project_id": "whatbytes-task-app-68831",
+    "storage_bucket": "whatbytes-task-app-68831.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:88516661803:android:7cfec74654caed6b0e506e",
+        "android_client_info": {
+          "package_name": "com.whatbytes.taskflow"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "88516661803-4drr5ae0riks8p3rdmkc9h1a0cp1ahe1.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.whatbytes.taskflow",
+            "certificate_hash": "e5219677df1ef774167a2d407d8d56e4681089ea"
+          }
+        },
+        {
+          "client_id": "88516661803-cpckpdqopf2lvk33gkomqt2fm1pg7dtr.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAleM-TbNZXdj2AQqgEU8jh8yJK9Br9MSo"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "88516661803-cpckpdqopf2lvk33gkomqt2fm1pg7dtr.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "88516661803-i8iqa3nr1b5juv83hdtjjha986doc8u1.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.whatbytes.taskflow"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -117,11 +117,19 @@ class _SignupScreenState extends State<SignupScreen> {
                       onPressed: () async {
                         final auth = context.read<AuthProvider>();
                         final router = GoRouter.of(context);
-                        final ok = await auth.signIn(
-                          email: 'google@demo.com',
-                          password: 'google123',
-                        );
-                        if (mounted && ok) router.go(AppRoutes.home);
+                        final messenger = ScaffoldMessenger.of(context);
+                        final ok = await auth.signInWithGoogle();
+                        if (!mounted) return;
+                        if (ok) {
+                          router.go(AppRoutes.home);
+                        } else if (auth.error != null) {
+                          messenger.showSnackBar(
+                            SnackBar(
+                              content: Text(auth.error!),
+                              backgroundColor: AppColors.danger,
+                            ),
+                          );
+                        }
                       },
                     ).animate().fadeIn(delay: 250.ms, duration: 300.ms),
                     const SizedBox(height: 32),

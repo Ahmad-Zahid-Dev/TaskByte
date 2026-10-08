@@ -25,6 +25,20 @@ class _AppState extends State<App> {
     super.initState();
     _authProvider = AuthProvider(_authService);
     _taskProvider = TaskProvider(_taskService);
+    _taskProvider.bindUser(_authProvider.user?.id);
+    _authProvider.addListener(_onAuthChanged);
+  }
+
+  void _onAuthChanged() {
+    _taskProvider.bindUser(_authProvider.user?.id);
+  }
+
+  @override
+  void dispose() {
+    _authProvider.removeListener(_onAuthChanged);
+    _authProvider.dispose();
+    _taskProvider.dispose();
+    super.dispose();
   }
 
   @override
