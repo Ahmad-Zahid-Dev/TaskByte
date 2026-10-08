@@ -1,5 +1,5 @@
 name: taskflow
-description: "TaskFlow – a clean task manager for gig workers."
+description: "TaskByte – a clean task manager for gig workers."
 publish_to: 'none'
 version: 1.0.0+1
 
@@ -21,6 +21,8 @@ dependencies:
   firebase_auth: ^6.7.0
   cloud_firestore: ^6.10.0
   google_sign_in: ^6.2.2
+  audioplayers: ^6.7.1
+  flutter_dotenv: ^6.0.1
 
 dev_dependencies:
   flutter_test:
@@ -29,3 +31,7 @@ dev_dependencies:
 
 flutter:
   uses-material-design: true
+  assets:
+    - assets/images/
+    - assets/sounds/
+    - .env

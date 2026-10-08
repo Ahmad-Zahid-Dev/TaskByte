@@ -44,36 +44,53 @@ class _PriorityOption extends StatelessWidget {
     return Expanded(
       child: GestureDetector(
         onTap: onTap,
+        behavior: HitTestBehavior.opaque,
         child: AnimatedContainer(
           duration: const Duration(milliseconds: 200),
           margin: const EdgeInsets.symmetric(horizontal: 4),
-          padding: const EdgeInsets.symmetric(vertical: 10),
+          padding: const EdgeInsets.symmetric(vertical: 12),
           decoration: BoxDecoration(
-            color: isSelected ? priority.color : AppColors.background,
-            borderRadius: BorderRadius.circular(10),
+            color: isSelected ? priority.color : AppColors.surface,
+            borderRadius: BorderRadius.circular(14),
             border: Border.all(
               color: isSelected
                   ? priority.color
-                  : AppColors.textSecondary.withValues(alpha: 0.3),
-              width: 1.5,
+                  : AppColors.textSecondary.withValues(alpha: 0.2),
+              width: 1.2,
             ),
+            boxShadow: isSelected
+                ? [
+                    BoxShadow(
+                      color: priority.color.withValues(alpha: 0.35),
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ]
+                : [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.02),
+                      blurRadius: 4,
+                      offset: const Offset(0, 1),
+                    ),
+                  ],
           ),
-          child: Column(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                width: 10,
-                height: 10,
+                width: 8,
+                height: 8,
                 decoration: BoxDecoration(
                   color: isSelected ? Colors.white : priority.color,
                   shape: BoxShape.circle,
                 ),
               ),
-              const SizedBox(height: 4),
+              const SizedBox(width: 6),
               Text(
                 priority.label,
                 style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
+                  fontSize: 13,
+                  fontWeight: isSelected ? FontWeight.w700 : FontWeight.w600,
                   color: isSelected ? Colors.white : AppColors.textPrimary,
                 ),
               ),

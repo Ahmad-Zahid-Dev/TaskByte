@@ -65,12 +65,23 @@ void main() {
       expect(provider.tasks.isNotEmpty, true);
     });
 
-    test('filters tasks by status and priority', () {
+    test('filters tasks by status, priority, and category', () {
       provider.setStatusFilter('Pending');
       expect(provider.filtered.every((t) => !t.isCompleted), true);
 
       provider.setPriorityFilter('High');
       expect(provider.filtered.every((t) => t.priority == Priority.high), true);
+
+      provider.setCategoryFilter('Work');
+      expect(
+        provider.filtered.every((t) => t.category?.toLowerCase() == 'work'),
+        true,
+      );
+
+      provider.resetFilters();
+      expect(provider.statusFilter, 'All');
+      expect(provider.priorityFilter, 'All');
+      expect(provider.categoryFilter, 'All');
     });
 
     test('creates and removes tasks with undo capability', () async {

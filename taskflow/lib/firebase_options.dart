@@ -3,17 +3,17 @@
 import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
 import 'package:flutter/foundation.dart'
     show defaultTargetPlatform, kIsWeb, TargetPlatform;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+String _val(String key, String fallback) {
+  try {
+    return dotenv.env[key] ?? fallback;
+  } catch (_) {
+    return fallback;
+  }
+}
 
 /// Default [FirebaseOptions] for use with your Firebase apps.
-///
-/// Example:
-/// ```dart
-/// import 'firebase_options.dart';
-/// // ...
-/// await Firebase.initializeApp(
-///   options: DefaultFirebaseOptions.currentPlatform,
-/// );
-/// ```
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
@@ -24,21 +24,6 @@ class DefaultFirebaseOptions {
         return android;
       case TargetPlatform.iOS:
         return ios;
-      case TargetPlatform.macOS:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for macos - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
-      case TargetPlatform.windows:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for windows - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
-      case TargetPlatform.linux:
-        throw UnsupportedError(
-          'DefaultFirebaseOptions have not been configured for linux - '
-          'you can reconfigure this by running the FlutterFire CLI again.',
-        );
       default:
         throw UnsupportedError(
           'DefaultFirebaseOptions are not supported for this platform.',
@@ -46,32 +31,32 @@ class DefaultFirebaseOptions {
     }
   }
 
-  static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyAleM-TbNZXdj2AQqgEU8jh8yJK9Br9MSo',
-    appId: '1:88516661803:android:7cfec74654caed6b0e506e',
-    messagingSenderId: '88516661803',
-    projectId: 'whatbytes-task-app-68831',
-    storageBucket: 'whatbytes-task-app-68831.firebasestorage.app',
+  static FirebaseOptions get android => FirebaseOptions(
+    apiKey: _val('FIREBASE_ANDROID_API_KEY', 'AIzaSyAleM-TbNZXdj2AQqgEU8jh8yJK9Br9MSo'),
+    appId: _val('FIREBASE_ANDROID_APP_ID', '1:88516661803:android:7cfec74654caed6b0e506e'),
+    messagingSenderId: _val('FIREBASE_MESSAGING_SENDER_ID', '88516661803'),
+    projectId: _val('FIREBASE_PROJECT_ID', 'whatbytes-task-app-68831'),
+    storageBucket: _val('FIREBASE_STORAGE_BUCKET', 'whatbytes-task-app-68831.firebasestorage.app'),
   );
-  static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDuqctfk1WpgIUbp6hmnCCn9f1tsRFhFzc',
-    appId: '1:88516661803:ios:cc4487ffbec6858f0e506e',
-    messagingSenderId: '88516661803',
-    projectId: 'whatbytes-task-app-68831',
-    storageBucket: 'whatbytes-task-app-68831.firebasestorage.app',
-    androidClientId:
-        '88516661803-4drr5ae0riks8p3rdmkc9h1a0cp1ahe1.apps.googleusercontent.com',
-    iosClientId:
-        '88516661803-i8iqa3nr1b5juv83hdtjjha986doc8u1.apps.googleusercontent.com',
-    iosBundleId: 'com.whatbytes.taskflow',
+
+  static FirebaseOptions get ios => FirebaseOptions(
+    apiKey: _val('FIREBASE_IOS_API_KEY', 'AIzaSyDuqctfk1WpgIUbp6hmnCCn9f1tsRFhFzc'),
+    appId: _val('FIREBASE_IOS_APP_ID', '1:88516661803:ios:cc4487ffbec6858f0e506e'),
+    messagingSenderId: _val('FIREBASE_MESSAGING_SENDER_ID', '88516661803'),
+    projectId: _val('FIREBASE_PROJECT_ID', 'whatbytes-task-app-68831'),
+    storageBucket: _val('FIREBASE_STORAGE_BUCKET', 'whatbytes-task-app-68831.firebasestorage.app'),
+    androidClientId: _val('FIREBASE_ANDROID_CLIENT_ID', '88516661803-4drr5ae0riks8p3rdmkc9h1a0cp1ahe1.apps.googleusercontent.com'),
+    iosClientId: _val('FIREBASE_IOS_CLIENT_ID', '88516661803-i8iqa3nr1b5juv83hdtjjha986doc8u1.apps.googleusercontent.com'),
+    iosBundleId: _val('FIREBASE_IOS_BUNDLE_ID', 'com.whatbytes.taskflow'),
   );
-  static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyCyjSQhQjRp-eyeMyhTYoY5M0JjL7k5FIs',
-    appId: '1:88516661803:web:b5d9059a9efcc20a0e506e',
-    messagingSenderId: '88516661803',
-    projectId: 'whatbytes-task-app-68831',
-    authDomain: 'whatbytes-task-app-68831.firebaseapp.com',
-    storageBucket: 'whatbytes-task-app-68831.firebasestorage.app',
+
+  static FirebaseOptions get web => FirebaseOptions(
+    apiKey: _val('FIREBASE_WEB_API_KEY', 'AIzaSyCyjSQhQjRp-eyeMyhTYoY5M0JjL7k5FIs'),
+    appId: _val('FIREBASE_WEB_APP_ID', '1:88516661803:web:b5d9059a9efcc20a0e506e'),
+    messagingSenderId: _val('FIREBASE_MESSAGING_SENDER_ID', '88516661803'),
+    projectId: _val('FIREBASE_PROJECT_ID', 'whatbytes-task-app-68831'),
+    authDomain: _val('FIREBASE_WEB_AUTH_DOMAIN', 'whatbytes-task-app-68831.firebaseapp.com'),
+    storageBucket: _val('FIREBASE_STORAGE_BUCKET', 'whatbytes-task-app-68831.firebasestorage.app'),
     measurementId: 'G-G2DVVV7SXC',
   );
 }

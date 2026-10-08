@@ -3,6 +3,7 @@ import 'package:flutter_slidable/flutter_slidable.dart';
 import '../models/task_model.dart';
 import '../core/theme/app_colors.dart';
 import '../core/utils/date_helper.dart';
+import '../core/utils/sound_helper.dart';
 import 'tag_chip.dart';
 
 class TaskTile extends StatelessWidget {
@@ -50,7 +51,7 @@ class TaskTile extends StatelessWidget {
                 borderRadius: BorderRadius.circular(16),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.05),
+                    color: Colors.black.withValues(alpha: 0.04),
                     blurRadius: 8,
                     offset: const Offset(0, 2),
                   ),
@@ -105,9 +106,9 @@ class _CheckboxState extends State<_Checkbox>
       duration: const Duration(milliseconds: 200),
     );
     _scale = Tween<double>(
-      begin: 1,
+      begin: 1.0,
       end: 1.25,
-    ).chain(CurveTween(curve: Curves.easeOut)).animate(_ctrl);
+    ).chain(CurveTween(curve: Curves.easeOutBack)).animate(_ctrl);
   }
 
   @override
@@ -118,6 +119,9 @@ class _CheckboxState extends State<_Checkbox>
 
   void _handleTap() {
     _ctrl.forward().then((_) => _ctrl.reverse());
+    if (!widget.checked) {
+      SoundHelper.playTaskCompleted();
+    }
     widget.onTap();
   }
 
@@ -125,22 +129,23 @@ class _CheckboxState extends State<_Checkbox>
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: _handleTap,
+      behavior: HitTestBehavior.opaque,
       child: ScaleTransition(
         scale: _scale,
         child: AnimatedContainer(
-          duration: const Duration(milliseconds: 250),
+          duration: const Duration(milliseconds: 220),
           width: 24,
           height: 24,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
             color: widget.checked ? widget.color : Colors.transparent,
             border: Border.all(
-              color: widget.checked ? widget.color : AppColors.textSecondary,
+              color: widget.checked ? widget.color : AppColors.textSecondary.withValues(alpha: 0.4),
               width: 2,
             ),
           ),
           child: widget.checked
-              ? const Icon(Icons.check, size: 14, color: Colors.white)
+              ? const Icon(Icons.check_rounded, size: 15, color: Colors.white)
               : null,
         ),
       ),
@@ -176,12 +181,12 @@ class _TileContent extends StatelessWidget {
         const SizedBox(height: 4),
         Row(
           children: [
-            Icon(
+            const Icon(
               Icons.calendar_today_outlined,
-              size: 10,
+              size: 11,
               color: AppColors.textSecondary,
             ),
-            const SizedBox(width: 3),
+            const SizedBox(width: 4),
             Text(
               DateHelper.taskDue(task.dueDate),
               style: const TextStyle(
@@ -189,7 +194,7 @@ class _TileContent extends StatelessWidget {
                 color: AppColors.textSecondary,
               ),
             ),
-            if (task.category != null) ...[
+            if (task.category != null && task.category!.isNotEmpty) ...[
               const SizedBox(width: 8),
               TagChip(label: task.category!),
             ],
@@ -210,7 +215,17 @@ class _PriorityDot extends StatelessWidget {
     return Container(
       width: 8,
       height: 8,
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+      decoration: BoxDecoration(
+        color: color,
+        shape: BoxShape.circle,
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: 0.35),
+            blurRadius: 4,
+            offset: const Offset(0, 1),
+          ),
+        ],
+      ),
     );
   }
 }

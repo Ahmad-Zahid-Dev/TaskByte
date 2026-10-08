@@ -4,8 +4,8 @@ import 'package:provider/provider.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import '../../core/router/app_router.dart';
 import '../../core/constants/app_strings.dart';
-import '../../core/theme/app_colors.dart';
 import '../../core/utils/date_helper.dart';
+import '../../core/utils/snackbar_helper.dart';
 import '../../models/task_model.dart';
 import '../../providers/task_provider.dart';
 import '../../widgets/task_tile.dart';
@@ -36,14 +36,26 @@ class TaskListView extends StatelessWidget {
     final grouped = context.watch<TaskProvider>().grouped;
 
     if (grouped.isEmpty) {
+      final taskProv = context.read<TaskProvider>();
       final hasFilters =
-          context.read<TaskProvider>().statusFilter != 'All' ||
-          context.read<TaskProvider>().priorityFilter != 'All' ||
-          context.read<TaskProvider>().search.isNotEmpty;
+          taskProv.hasActiveFilters || taskProv.search.isNotEmpty;
+
       return EmptyState(
-        icon: hasFilters ? Icons.search_off_rounded : Icons.checklist_rounded,
-        title: hasFilters ? AppStrings.noMatches : AppStrings.noTasks,
-        subtitle: hasFilters ? AppStrings.noMatchesSub : AppStrings.noTasksSub,
+        icon: hasFilters
+            ? Icons.search_off_rounded
+            : Icons.add_task_rounded,
+        title: hasFilters ? AppStrings.noMatches : 'No tasks yet',
+        subtitle: hasFilters
+            ? AppStrings.noMatchesSub
+            : 'You have no tasks scheduled. Tap below to create your first task and get started!',
+        ctaLabel: hasFilters ? 'Reset filters' : 'Add your first task',
+        onCtaPressed: () {
+          if (hasFilters) {
+            taskProv.resetFilters();
+          } else {
+            context.push(AppRoutes.addTask);
+          }
+        },
       );
     }
 
@@ -89,16 +101,9 @@ class _AnimatedTile extends StatelessWidget {
       onDelete: () async {
         await prov.deleteTask(task.id);
         if (!context.mounted) return;
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: const Text(AppStrings.taskDeleted),
-            action: SnackBarAction(
-              label: AppStrings.undo,
-              textColor: AppColors.primaryLight,
-              onPressed: () => context.read<TaskProvider>().undoDelete(),
-            ),
-            duration: const Duration(seconds: 4),
-          ),
+        SnackBarHelper.showTaskDeleted(
+          context,
+          onUndo: () => prov.undoDelete(),
         );
       },
     );

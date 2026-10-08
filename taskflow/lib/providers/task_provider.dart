@@ -17,11 +17,26 @@ class TaskProvider extends ChangeNotifier {
   // Filter state
   String _statusFilter = 'All';
   String _priorityFilter = 'All';
+  String _categoryFilter = 'All';
   String _search = '';
 
   String get statusFilter => _statusFilter;
   String get priorityFilter => _priorityFilter;
+  String get categoryFilter => _categoryFilter;
   String get search => _search;
+
+  bool get hasActiveFilters =>
+      _statusFilter != 'All' ||
+      _priorityFilter != 'All' ||
+      _categoryFilter != 'All';
+
+  int get activeFilterCount {
+    int count = 0;
+    if (_statusFilter != 'All') count++;
+    if (_priorityFilter != 'All') count++;
+    if (_categoryFilter != 'All') count++;
+    return count;
+  }
 
   List<TaskModel> get tasks => _tasks;
 
@@ -52,6 +67,12 @@ class TaskProvider extends ChangeNotifier {
         final match = _priorityFilter.toLowerCase();
         if (t.priority.name != match) return false;
       }
+      if (_categoryFilter != 'All') {
+        if (t.category == null ||
+            t.category!.toLowerCase() != _categoryFilter.toLowerCase()) {
+          return false;
+        }
+      }
       if (_search.isNotEmpty) {
         if (!t.title.toLowerCase().contains(_search.toLowerCase())) {
           return false;
@@ -79,6 +100,19 @@ class TaskProvider extends ChangeNotifier {
   void setPriorityFilter(String value) {
     if (_priorityFilter == value) return;
     _priorityFilter = value;
+    notifyListeners();
+  }
+
+  void setCategoryFilter(String value) {
+    if (_categoryFilter == value) return;
+    _categoryFilter = value;
+    notifyListeners();
+  }
+
+  void resetFilters() {
+    _statusFilter = 'All';
+    _priorityFilter = 'All';
+    _categoryFilter = 'All';
     notifyListeners();
   }
 
@@ -128,11 +162,22 @@ class TaskProvider extends ChangeNotifier {
     if (idx == -1) return;
     _lastDeleted = _tasks[idx];
     final uid = _userId;
+
+    // Immediately remove from local list and update UI
+    _tasks.removeAt(idx);
+    notifyListeners();
+
     if (uid != null) {
-      await _service.delete(uid, id);
-    } else {
-      _tasks.removeAt(idx);
-      notifyListeners();
+      try {
+        await _service.delete(uid, id);
+      } catch (_) {
+        // Restore locally if remote delete failed
+        if (_lastDeleted?.id == id) {
+          _tasks.insert(idx, _lastDeleted!);
+          _lastDeleted = null;
+          notifyListeners();
+        }
+      }
     }
   }
 
@@ -140,13 +185,21 @@ class TaskProvider extends ChangeNotifier {
     final task = _lastDeleted;
     if (task == null) return;
     _lastDeleted = null;
-    final uid = _userId;
-    if (uid != null) {
-      await _service.restore(uid, task);
-    } else {
+
+    // Immediately restore to local list, sort, and update UI
+    if (!_tasks.any((t) => t.id == task.id)) {
       _tasks.add(task);
       _tasks.sort((a, b) => a.dueDate.compareTo(b.dueDate));
       notifyListeners();
+    }
+
+    final uid = _userId;
+    if (uid != null) {
+      try {
+        await _service.restore(uid, task);
+      } catch (_) {
+        // Handled silently
+      }
     }
   }
 

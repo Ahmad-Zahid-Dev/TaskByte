@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../core/theme/app_colors.dart';
 
-class SocialButton extends StatelessWidget {
+class SocialButton extends StatefulWidget {
   const SocialButton({
     super.key,
     required this.label,
@@ -16,89 +16,112 @@ class SocialButton extends StatelessWidget {
   final Widget? logoAsset;
 
   @override
+  State<SocialButton> createState() => _SocialButtonState();
+}
+
+class _SocialButtonState extends State<SocialButton> {
+  bool _pressed = false;
+
+  @override
   Widget build(BuildContext context) {
-    return OutlinedButton(
-      onPressed: onPressed,
-      style: OutlinedButton.styleFrom(
-        foregroundColor: AppColors.textPrimary,
-        side: BorderSide(color: AppColors.textSecondary.withValues(alpha: 0.3)),
-        minimumSize: const Size(double.infinity, 52),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          if (logoAsset != null) logoAsset! else if (icon != null) Icon(icon),
-          const SizedBox(width: 12),
-          Text(
-            label,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w600,
-              color: AppColors.textPrimary,
+    return AnimatedScale(
+      scale: _pressed ? 0.98 : 1.0,
+      duration: const Duration(milliseconds: 120),
+      curve: Curves.easeInOut,
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.surface,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: const Color(0xFFE2E4F0), width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.textPrimary.withValues(alpha: 0.04),
+              blurRadius: 12,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: widget.onPressed,
+            onHighlightChanged: (highlighted) =>
+                setState(() => _pressed = highlighted),
+            borderRadius: BorderRadius.circular(16),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  widget.logoAsset ??
+                      (widget.icon != null
+                          ? Icon(
+                              widget.icon,
+                              size: 22,
+                              color: AppColors.textPrimary,
+                            )
+                          : const SizedBox.shrink()),
+                  const SizedBox(width: 12),
+                  Text(
+                    widget.label,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textPrimary,
+                      letterSpacing: -0.2,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-        ],
+        ),
       ),
     );
   }
 }
 
 class GoogleLogo extends StatelessWidget {
-  const GoogleLogo({super.key, this.size = 20});
+  const GoogleLogo({super.key, this.size = 22});
+
   final double size;
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
+    return Image.asset(
+      'assets/images/google_logo.png',
       width: size,
       height: size,
-      child: CustomPaint(painter: _GoogleLogoPainter()),
+      fit: BoxFit.contain,
+      filterQuality: FilterQuality.medium,
+      errorBuilder: (context, error, stackTrace) => CustomPaint(
+        size: Size(size, size),
+        painter: _FallbackGooglePainter(),
+      ),
     );
   }
 }
 
-class _GoogleLogoPainter extends CustomPainter {
+class _FallbackGooglePainter extends CustomPainter {
   @override
   void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final radius = size.width / 2;
-    final paint = Paint()..style = PaintingStyle.fill;
+    final s = size.width;
+    final r = Rect.fromLTWH(0, 0, s, s);
 
-    // Red
+    final paint = Paint()
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = s * 0.22;
+
+    paint.color = const Color(0xFF4285F4);
+    canvas.drawArc(r.deflate(s * 0.11), -0.7, 1.4, false, paint);
+    paint.color = const Color(0xFF34A853);
+    canvas.drawArc(r.deflate(s * 0.11), 0.7, 1.4, false, paint);
+    paint.color = const Color(0xFFFBBC05);
+    canvas.drawArc(r.deflate(s * 0.11), 2.1, 1.4, false, paint);
     paint.color = const Color(0xFFEA4335);
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -1.57,
-      3.14,
-      true,
-      paint,
-    );
-    // Blue
-    paint.color = const Color(0xFF4285F4);
-    canvas.drawArc(
-      Rect.fromCircle(center: center, radius: radius),
-      -1.57,
-      -3.14,
-      true,
-      paint,
-    );
-    // White center
-    paint.color = Colors.white;
-    canvas.drawCircle(center, radius * 0.6, paint);
-    // Blue bar (right)
-    paint.color = const Color(0xFF4285F4);
-    canvas.drawRect(
-      Rect.fromLTWH(
-        center.dx,
-        center.dy - radius * 0.18,
-        radius,
-        radius * 0.36,
-      ),
-      paint,
-    );
+    canvas.drawArc(r.deflate(s * 0.11), 3.5, 1.4, false, paint);
   }
 
   @override
-  bool shouldRepaint(_) => false;
+  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
 }

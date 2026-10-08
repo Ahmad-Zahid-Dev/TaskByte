@@ -27,22 +27,10 @@ class FirestoreTaskService implements TaskService {
   @override
   Stream<List<TaskModel>> streamTasks(String userId) {
     return _userTasksRef(userId).snapshots().map((snapshot) {
-      if (snapshot.docs.isEmpty) {
-        // Seed default sample tasks for a new user in the background
-        _seedInitialTasks(userId);
-        return seedTasks();
-      }
-      return snapshot.docs.map((doc) => TaskModel.fromMap(doc.data())).toList();
+      return snapshot.docs
+          .map((doc) => TaskModel.fromMap(doc.data()))
+          .toList();
     });
-  }
-
-  Future<void> _seedInitialTasks(String userId) async {
-    final batch = _firestore.batch();
-    final ref = _userTasksRef(userId);
-    for (final task in seedTasks()) {
-      batch.set(ref.doc(task.id), task.toMap());
-    }
-    await batch.commit();
   }
 
   @override
@@ -125,7 +113,7 @@ List<TaskModel> seedTasks() {
       description: 'Prepare timesheet and submit invoice to client.',
       dueDate: today.subtract(const Duration(days: 1)),
       priority: Priority.high,
-      category: 'Finance',
+      category: 'Work',
       isCompleted: false,
       createdAt: today.subtract(const Duration(days: 3)),
     ),
@@ -135,7 +123,7 @@ List<TaskModel> seedTasks() {
       description: 'Courier order #4492. Signature required.',
       dueDate: today.add(const Duration(hours: 3)),
       priority: Priority.high,
-      category: 'Delivery',
+      category: 'Work',
       isCompleted: false,
       createdAt: today.subtract(const Duration(days: 1)),
     ),
@@ -145,7 +133,7 @@ List<TaskModel> seedTasks() {
       description: 'Check tire pressure and top up gas tank.',
       dueDate: today.add(const Duration(hours: 6)),
       priority: Priority.medium,
-      category: 'Vehicle',
+      category: 'Personal',
       isCompleted: false,
       createdAt: today,
     ),
@@ -155,17 +143,17 @@ List<TaskModel> seedTasks() {
       description: 'Collect morning order from Downtown Bakery.',
       dueDate: today.add(const Duration(days: 1, hours: 2)),
       priority: Priority.low,
-      category: 'Delivery',
+      category: 'Work',
       isCompleted: false,
       createdAt: today,
     ),
     TaskModel(
       id: 'seed_5',
-      title: 'Review weekly earnings statement',
-      description: 'Reconcile platform payouts with bank account.',
+      title: 'Study Flutter state management architecture',
+      description: 'Review modern Provider and reactive patterns.',
       dueDate: today.add(const Duration(days: 3)),
       priority: Priority.medium,
-      category: 'Finance',
+      category: 'Study',
       isCompleted: false,
       createdAt: today,
     ),

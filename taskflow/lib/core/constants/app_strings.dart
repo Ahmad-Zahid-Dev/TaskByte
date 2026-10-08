@@ -1,5 +1,5 @@
 abstract final class AppStrings {
-  static const appName = 'TaskFlow';
+  static const appName = 'TaskByte';
 
   // Onboarding
   static const onboarding1Title = 'Get things done.';
@@ -79,7 +79,7 @@ abstract final class AppStrings {
   static const profile = 'Profile';
   static const logOut = 'Log out';
   static const demoUser = 'Demo User';
-  static const demoEmail = 'demo@taskflow.app';
+  static const demoEmail = 'demo@taskbyte.app';
 
   // Bottom nav
   static const tasks = 'Tasks';

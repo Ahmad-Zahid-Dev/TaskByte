@@ -50,10 +50,18 @@ class AuthProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  Future<bool> signUp({required String email, required String password}) async {
+  Future<bool> signUp({
+    required String email,
+    required String password,
+    String? fullName,
+  }) async {
     _setLoading(true);
     try {
-      _user = await _service.signUp(email: email, password: password);
+      _user = await _service.signUp(
+        email: email,
+        password: password,
+        displayName: fullName,
+      );
       _status = AuthStatus.authenticated;
       _loading = false;
       notifyListeners();
@@ -63,6 +71,22 @@ class AuthProvider extends ChangeNotifier {
       return false;
     } catch (_) {
       _setError('Something went wrong. Please try again.');
+      return false;
+    }
+  }
+
+  Future<bool> updateName(String newName) async {
+    _setLoading(true);
+    try {
+      _user = await _service.updateDisplayName(newName);
+      _loading = false;
+      notifyListeners();
+      return true;
+    } on AuthException catch (e) {
+      _setError(e.message);
+      return false;
+    } catch (_) {
+      _setError('Could not update name. Please try again.');
       return false;
     }
   }

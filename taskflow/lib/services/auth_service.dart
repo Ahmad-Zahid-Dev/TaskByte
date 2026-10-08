@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../models/app_user.dart';
 
-const String _webClientId =
+String get _webClientId =>
+    dotenv.env['FIREBASE_WEB_CLIENT_ID'] ??
     '88516661803-cpckpdqopf2lvk33gkomqt2fm1pg7dtr.apps.googleusercontent.com';
 
 class AuthService {
@@ -33,6 +35,7 @@ class AuthService {
   Future<AppUser> signUp({
     required String email,
     required String password,
+    String? displayName,
   }) async {
     try {
       final credential = await _auth.createUserWithEmailAndPassword(
@@ -41,7 +44,29 @@ class AuthService {
       );
       final user = credential.user;
       if (user == null) throw const AuthException('Could not create account');
+      if (displayName != null && displayName.trim().isNotEmpty) {
+        await user.updateDisplayName(displayName.trim());
+        await user.reload();
+        final refreshed = _auth.currentUser ?? user;
+        return _mapFirebaseUser(refreshed);
+      }
       return _mapFirebaseUser(user);
+    } on FirebaseAuthException catch (e) {
+      throw AuthException(_mapFirebaseAuthError(e));
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw AuthException(e.toString());
+    }
+  }
+
+  Future<AppUser> updateDisplayName(String name) async {
+    try {
+      final user = _auth.currentUser;
+      if (user == null) throw const AuthException('No user logged in');
+      await user.updateDisplayName(name.trim());
+      await user.reload();
+      final refreshed = _auth.currentUser ?? user;
+      return _mapFirebaseUser(refreshed);
     } on FirebaseAuthException catch (e) {
       throw AuthException(_mapFirebaseAuthError(e));
     } catch (e) {

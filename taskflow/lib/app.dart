@@ -68,7 +68,7 @@ class _RouterAppState extends State<_RouterApp> {
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'TaskFlow',
+      title: 'TaskByte',
       theme: buildAppTheme(),
       routerConfig: router,
       debugShowCheckedModeBanner: false,

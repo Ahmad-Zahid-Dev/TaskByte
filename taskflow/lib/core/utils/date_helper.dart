@@ -22,6 +22,18 @@ abstract final class DateHelper {
 
   static String taskDue(DateTime date) => _dayFmt.format(date);
 
+  static bool isToday(DateTime date) {
+    final now = DateTime.now();
+    return date.year == now.year && date.month == now.month && date.day == now.day;
+  }
+
+  static bool isTomorrow(DateTime date) {
+    final tomorrow = DateTime.now().add(const Duration(days: 1));
+    return date.year == tomorrow.year &&
+        date.month == tomorrow.month &&
+        date.day == tomorrow.day;
+  }
+
   static DateTime _normalize(DateTime d) => DateTime(d.year, d.month, d.day);
 
   static TaskGroup groupFor(DateTime due) {

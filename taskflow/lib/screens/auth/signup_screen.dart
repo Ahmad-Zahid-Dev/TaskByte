@@ -6,6 +6,7 @@ import '../../core/router/app_router.dart';
 import '../../core/theme/app_colors.dart';
 import '../../core/constants/app_strings.dart';
 import '../../core/utils/validators.dart';
+import '../../core/utils/ui_feedback.dart';
 import '../../providers/auth_provider.dart';
 import '../../widgets/app_button.dart';
 import '../../widgets/app_text_field.dart';
@@ -22,11 +23,13 @@ class SignupScreen extends StatefulWidget {
 
 class _SignupScreenState extends State<SignupScreen> {
   final _formKey = GlobalKey<FormState>();
+  final _nameCtrl = TextEditingController();
   final _emailCtrl = TextEditingController();
   final _passCtrl = TextEditingController();
 
   @override
   void dispose() {
+    _nameCtrl.dispose();
     _emailCtrl.dispose();
     _passCtrl.dispose();
     super.dispose();
@@ -38,24 +41,42 @@ class _SignupScreenState extends State<SignupScreen> {
     final ok = await auth.signUp(
       email: _emailCtrl.text.trim(),
       password: _passCtrl.text,
+      fullName: _nameCtrl.text.trim(),
     );
     if (!mounted) return;
     if (ok) {
       context.go(AppRoutes.home);
     } else {
-      _showError(auth.error ?? AppStrings.genericError);
+      UiFeedback.showSnackBar(
+        context,
+        title: 'Sign Up Failed',
+        message: auth.error ?? AppStrings.genericError,
+        isError: true,
+      );
     }
   }
 
-  void _showError(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(msg), backgroundColor: AppColors.danger),
-    );
+  Future<void> _handleGoogleSignIn() async {
+    final auth = context.read<AuthProvider>();
+    final ok = await auth.signInWithGoogle();
+    if (!mounted) return;
+    if (ok) {
+      context.go(AppRoutes.home);
+    } else if (auth.error != null) {
+      UiFeedback.showSnackBar(
+        context,
+        title: 'Google Sign In',
+        message: auth.error!,
+        isError: true,
+      );
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final loading = context.select((AuthProvider p) => p.loading);
+    final size = MediaQuery.sizeOf(context);
+    final isCompact = size.width < 500;
 
     return Scaffold(
       backgroundColor: AppColors.background,
@@ -63,82 +84,151 @@ class _SignupScreenState extends State<SignupScreen> {
         children: [
           const ConfettiDots(),
           SafeArea(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 32),
-                    const Hero(tag: 'logo_tile', child: LogoTile(size: 80)),
-                    const SizedBox(height: 32),
-                    Text(
-                          AppStrings.letsGetStarted,
-                          style: Theme.of(context).textTheme.headlineSmall
-                              ?.copyWith(
-                                fontWeight: FontWeight.w700,
-                                color: AppColors.textPrimary,
-                              ),
-                        )
-                        .animate()
-                        .fadeIn(duration: 300.ms)
-                        .slideY(begin: 0.2, end: 0),
-                    const SizedBox(height: 32),
-                    AppTextField(
-                      controller: _emailCtrl,
-                      label: AppStrings.emailAddress,
-                      keyboardType: TextInputType.emailAddress,
-                      textInputAction: TextInputAction.next,
-                      validator: Validators.email,
-                      showValidTick: true,
-                      onChanged: (_) => setState(() {}),
-                    ).animate().fadeIn(delay: 100.ms, duration: 300.ms),
-                    const SizedBox(height: 16),
-                    AppTextField(
-                      controller: _passCtrl,
-                      label: AppStrings.password,
-                      isPassword: true,
-                      textInputAction: TextInputAction.done,
-                      validator: Validators.password,
-                    ).animate().fadeIn(delay: 150.ms, duration: 300.ms),
-                    const SizedBox(height: 24),
-                    AppButton(
-                      label: AppStrings.signUp,
-                      onPressed: _submit,
-                      loading: loading,
-                    ).animate().fadeIn(delay: 200.ms, duration: 300.ms),
-                    const SizedBox(height: 24),
-                    _Divider(label: AppStrings.orSignUpWith),
-                    const SizedBox(height: 20),
-                    SocialButton(
-                      label: AppStrings.continueWithGoogle,
-                      logoAsset: const GoogleLogo(),
-                      onPressed: () async {
-                        final auth = context.read<AuthProvider>();
-                        final router = GoRouter.of(context);
-                        final messenger = ScaffoldMessenger.of(context);
-                        final ok = await auth.signInWithGoogle();
-                        if (!mounted) return;
-                        if (ok) {
-                          router.go(AppRoutes.home);
-                        } else if (auth.error != null) {
-                          messenger.showSnackBar(
-                            SnackBar(
-                              content: Text(auth.error!),
-                              backgroundColor: AppColors.danger,
+            child: Center(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: EdgeInsets.symmetric(
+                  horizontal: isCompact ? 20 : 32,
+                  vertical: 24,
+                ),
+                child: Center(
+                  child: ConstrainedBox(
+                    constraints: const BoxConstraints(maxWidth: 440),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(28),
+                        border: Border.all(
+                          color: const Color(0xFFE9EBF5),
+                          width: 1.2,
+                        ),
+                        boxShadow: [
+                          BoxShadow(
+                            color: AppColors.textPrimary.withValues(
+                              alpha: 0.05,
                             ),
-                          );
-                        }
-                      },
-                    ).animate().fadeIn(delay: 250.ms, duration: 300.ms),
-                    const SizedBox(height: 32),
-                    _Footer(
-                      text: AppStrings.alreadyHaveAccount,
-                      linkText: AppStrings.logIn,
-                      onTap: () => context.go(AppRoutes.login),
-                    ).animate().fadeIn(delay: 300.ms, duration: 300.ms),
-                  ],
+                            blurRadius: 30,
+                            offset: const Offset(0, 10),
+                          ),
+                        ],
+                      ),
+                      padding: EdgeInsets.symmetric(
+                        horizontal: isCompact ? 22 : 32,
+                        vertical: isCompact ? 28 : 36,
+                      ),
+                      child: Form(
+                        key: _formKey,
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Center(
+                              child:
+                                  const Hero(
+                                    tag: 'logo_tile',
+                                    child: LogoTile(size: 76),
+                                  ).animate().scale(
+                                    duration: 400.ms,
+                                    curve: Curves.easeOutBack,
+                                  ),
+                            ),
+                            const SizedBox(height: 24),
+                            Text(
+                                  AppStrings.letsGetStarted,
+                                  textAlign: TextAlign.center,
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .headlineSmall
+                                      ?.copyWith(
+                                        fontWeight: FontWeight.w800,
+                                        color: AppColors.textPrimary,
+                                        letterSpacing: -0.5,
+                                      ),
+                                )
+                                .animate()
+                                .fadeIn(duration: 300.ms)
+                                .slideY(begin: 0.2, end: 0),
+                            const SizedBox(height: 6),
+                            const Text(
+                              'Create an account to start managing gig projects',
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: AppColors.textSecondary,
+                                fontSize: 13.5,
+                                fontWeight: FontWeight.w400,
+                              ),
+                            ).animate().fadeIn(delay: 50.ms, duration: 300.ms),
+                            const SizedBox(height: 28),
+                            AppTextField(
+                              controller: _nameCtrl,
+                              label: 'Full Name',
+                              hint: 'e.g. Ahmad Zahid',
+                              prefixIcon: const Icon(
+                                Icons.person_outline_rounded,
+                              ),
+                              keyboardType: TextInputType.name,
+                              textInputAction: TextInputAction.next,
+                              validator: (val) {
+                                if (val == null || val.trim().isEmpty) {
+                                  return 'Please enter your full name';
+                                }
+                                if (val.trim().length < 2) {
+                                  return 'Name must be at least 2 characters';
+                                }
+                                return null;
+                              },
+                            ).animate().fadeIn(delay: 50.ms, duration: 300.ms),
+                            const SizedBox(height: 18),
+                            AppTextField(
+                              controller: _emailCtrl,
+                              label: AppStrings.emailAddress,
+                              hint: 'name@example.com',
+                              prefixIcon: const Icon(
+                                Icons.alternate_email_rounded,
+                              ),
+                              keyboardType: TextInputType.emailAddress,
+                              textInputAction: TextInputAction.next,
+                              validator: Validators.email,
+                              showValidTick: true,
+                              onChanged: (_) => setState(() {}),
+                            ).animate().fadeIn(delay: 100.ms, duration: 300.ms),
+                            const SizedBox(height: 18),
+                            AppTextField(
+                              controller: _passCtrl,
+                              label: AppStrings.password,
+                              hint: 'At least 6 characters',
+                              prefixIcon: const Icon(
+                                Icons.lock_outline_rounded,
+                              ),
+                              isPassword: true,
+                              textInputAction: TextInputAction.done,
+                              validator: Validators.password,
+                            ).animate().fadeIn(delay: 150.ms, duration: 300.ms),
+                            const SizedBox(height: 24),
+                            AppButton(
+                              label: AppStrings.signUp,
+                              onPressed: _submit,
+                              loading: loading,
+                            ).animate().fadeIn(delay: 200.ms, duration: 300.ms),
+                            const SizedBox(height: 22),
+                            _Divider(label: AppStrings.orSignUpWith),
+                            const SizedBox(height: 20),
+                            SocialButton(
+                              label: AppStrings.continueWithGoogle,
+                              logoAsset: const GoogleLogo(),
+                              onPressed: _handleGoogleSignIn,
+                            ).animate().fadeIn(delay: 250.ms, duration: 300.ms),
+                            const SizedBox(height: 28),
+                            _Footer(
+                              text: AppStrings.alreadyHaveAccount,
+                              linkText: AppStrings.logIn,
+                              onTap: () => context.go(AppRoutes.login),
+                            ).animate().fadeIn(delay: 300.ms, duration: 300.ms),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ),
@@ -157,22 +247,19 @@ class _Divider extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        const Expanded(
-          child: Divider(color: AppColors.textSecondary, thickness: 0.4),
-        ),
+        const Expanded(child: Divider(color: Color(0xFFE4E6F0), thickness: 1)),
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 12),
+          padding: const EdgeInsets.symmetric(horizontal: 14),
           child: Text(
             label,
             style: const TextStyle(
               color: AppColors.textSecondary,
-              fontSize: 12,
+              fontSize: 12.5,
+              fontWeight: FontWeight.w500,
             ),
           ),
         ),
-        const Expanded(
-          child: Divider(color: AppColors.textSecondary, thickness: 0.4),
-        ),
+        const Expanded(child: Divider(color: Color(0xFFE4E6F0), thickness: 1)),
       ],
     );
   }
@@ -196,7 +283,11 @@ class _Footer extends StatelessWidget {
       children: [
         Text(
           '$text ',
-          style: const TextStyle(color: AppColors.textSecondary, fontSize: 13),
+          style: const TextStyle(
+            color: AppColors.textSecondary,
+            fontSize: 13.5,
+            fontWeight: FontWeight.w500,
+          ),
         ),
         GestureDetector(
           onTap: onTap,
@@ -205,7 +296,7 @@ class _Footer extends StatelessWidget {
             style: const TextStyle(
               color: AppColors.primary,
               fontWeight: FontWeight.w700,
-              fontSize: 13,
+              fontSize: 13.5,
             ),
           ),
         ),

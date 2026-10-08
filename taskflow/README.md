@@ -1,103 +1,82 @@
-# TaskFlow – Task Management App for Gig Workers
+# ⚡ TaskByte — Gig Worker Task Management App
 
-TaskFlow is a productivity and task management app tailored for gig workers and freelancers to balance fast-paced deadlines, varied categories, and shifting schedules.
-
-Built across **Phase 1** (UI/UX, design system, Provider state management) and **Phase 2** (Firebase Auth with Google Sign-In, Cloud Firestore real-time streams, offline cache, and secure per-user rules).
+TaskByte is a clean, modern task manager built for gig workers and freelancers to effortlessly manage fast-paced tasks, deadlines, priorities, and schedules with audio feedback and real-time cloud sync.
 
 ---
 
-## 📱 Features
+## 🛠 Tech Stack
 
-- **Onboarding Flow**: 3-screen animated intro highlighting workload tracking, priority sorting, and calendar scheduling.
-- **Authentication (Phase 2 Live Firebase)**:
-  - Email & Password sign-up and sign-in with instant inline validation and user-friendly Firebase error mapping.
-  - Native Google Sign-In with configured Android debug SHA-1 and SHA-256 certificate fingerprints.
-  - Password reset email delivery.
-  - Auto-login via `FirebaseAuth.authStateChanges()` listener.
-- **Home & Task Management**:
-  - Gradient header with personalized greeting, search bar, and filter chips (*Status: All / Pending / Completed*, *Priority: All / High / Medium / Low*).
-  - Tasks grouped dynamically into **Overdue**, **Today**, **Tomorrow**, and **Upcoming**.
-  - Interactive completion checkboxes with confetti burst animation.
-  - Swipe-to-delete with an instantaneous "Undo" SnackBar.
-- **Cloud Firestore Real-Time Sync & Offline Support**:
-  - Tasks stored under `users/{userId}/tasks/{taskId}`.
-  - Real-time updates with Firestore reactive streams.
-  - Offline persistence enabled by default.
-  - Initial seed tasks seeded automatically on new account creation.
-- **Add & Edit Task**:
-  - Shared, reusable form screen with title, description, priority selector, category picker, and custom date picker.
-- **Calendar View**:
-  - Custom month grid with task indicator dots and day-by-day task lists.
-- **Profile Screen**:
-  - User details display, statistics overview, and sign-out flow.
+- **Framework**: Flutter 3.x (Dart 3.x) — Android, iOS & Web
+- **State Management**: Provider (reactive MVVM pattern)
+- **Backend & Auth**: Firebase Auth (Email/Password + Google Sign-In) & Cloud Firestore
+- **Design & Typography**: Google Fonts (Poppins), custom `#6C63FF` design system
+- **Sound & Haptics**: AudioPlayers with offline WAV sound effects and haptic feedback
+- **Animations**: Flutter Animate, custom page transitions & micro-interactions
 
 ---
 
-## 🔑 Firebase & Android Configuration
+## 🏛 Code Architecture
 
-- **Firebase Project ID**: `whatbytes-task-app-68831`
-- **Application / Package ID**: `com.whatbytes.taskflow`
-- **Registered SHA-1**: `E5:21:96:77:DF:1E:F7:74:16:7A:2D:40:7D:8D:56:E4:68:10:89:EA`
-- **Registered SHA-256**: `96:BE:CA:74:CE:40:04:55:74:88:04:03:9C:06:25:28:0C:0E:3E:ED:CE:06:A8:51:1D:D4:BE:52:C6:8B:BE:CD`
-- **Firestore Security Rules**: Deployed with strict per-user isolation (`request.auth.uid == userId`).
+The codebase follows a **Clean, Layered Architecture** with clear separation of concerns:
 
----
-
-## 🏗 Architecture & Code Structure
-
-```text
+```
 lib/
-├── core/
-│   ├── constants/       # App strings, constants
-│   ├── router/          # GoRouter configuration & page transitions
-│   ├── theme/           # Color tokens, typography, ThemeData
-│   └── utils/           # Date grouping, regex validators
-├── models/              # Immutable data models (TaskModel, AppUser)
-├── providers/           # Provider state management (AuthProvider, TaskProvider)
-├── services/            # Services with Firebase & In-Memory options (AuthService, TaskService)
-├── widgets/             # Reusable atomic UI components (buttons, textfields, chips, tiles)
-├── screens/
-│   ├── auth/            # Login and sign-up screens
-│   ├── calendar/        # Calendar screen with month grid
-│   ├── home/            # Home screen and grouped task list
-│   ├── onboarding/      # 3-step animated onboarding
-│   ├── profile/         # Profile & account screen
-│   └── task_form/       # Add / Edit task modal screen
-├── firebase_options.dart # Generated FlutterFire options for Android & iOS
-├── app.dart             # App root configuring MultiProvider & MaterialApp.router
-└── main.dart            # Firebase initialization & runApp
+├── core/         # Theme tokens, GoRouter routes, constants, sound & date helpers
+├── models/       # Immutable data models (TaskModel, AppUser, Priority)
+├── services/     # Firebase Auth, Cloud Firestore & In-Memory fallback services
+├── providers/    # Reactive state management (AuthProvider, TaskProvider with optimistic UI)
+├── screens/      # Feature screens (Onboarding, Auth, Home, Calendar, TaskForm, Profile)
+└── widgets/      # Reusable components (TaskTile, FilterBar, AppButton, AppTextField)
 ```
+
+**Key Architectural Highlights**:
+- **Optimistic UI Updates**: Task creation, deletion, and undo update the UI instantly without network lag.
+- **Dependency Inversion**: Core business logic relies on service contracts, allowing seamless in-memory or Firebase switching.
+- **Reactive Streams**: Real-time Firestore sync with automated sample task seeding for new users.
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Simple Setup Guide (Step-by-Step)
 
-### Prerequisites
-- Flutter SDK 3.x+
-- Dart SDK 3.x+
+Follow these simple steps to run the app:
 
-### Setup
+### 1. Prerequisites
+- Install **Flutter SDK** on your computer ([flutter.dev](https://flutter.dev)).
+- Have an Android phone/emulator or Google Chrome browser ready.
+
+### 2. Download & Install Packages
+Open your terminal in the project directory and run:
 ```bash
-# Clone and enter directory
-cd taskflow
-
-# Install dependencies
 flutter pub get
-
-# Run static analysis
-flutter analyze
-
-# Run unit tests
-flutter test
-
-# Run app on Android device / emulator
-flutter run
 ```
+
+### 3. Setup Environment File (.env)
+Copy `.env.example` to create your local `.env` file:
+```bash
+cp .env.example .env
+```
+*(All sensitive Firebase keys and IDs are securely stored in `.env` and excluded from Git via `.gitignore`.)*
+
+### 4. Run the Application
+- **Run in Google Chrome**:
+  ```bash
+  flutter run -d chrome
+  ```
+- **Run on Android Phone / Emulator**:
+  ```bash
+  flutter run
+  ```
+- **Build Release APK**:
+  ```bash
+  flutter build apk --release
+  ```
+  *(Note: ensure there is no space between `--` and `release`)*
 
 ---
 
-## 🧪 Testing & Code Quality
-
-- **Static Analysis**: `flutter analyze` reports 0 issues.
-- **Formatting**: Adheres strictly to `dart format`.
-- **Unit Tests**: Full test suite passing in `test/widget_test.dart`.
+## 📱 Key Features
+- **Smart Grouping**: Tasks automatically organized into Overdue, Today, Tomorrow, and Later.
+- **Sound Effects**: Uplifting chime on task creation; celebratory fanfare on task completion.
+- **Modern Filters**: Clean unified filters for Status, Priority, and Category (Personal, Work, Study).
+- **Calendar View**: Visual month calendar with workload dots and single-tap date filtering.
+- **Instant Undo**: Floating snackbar allows 1-tap recovery for deleted tasks.
